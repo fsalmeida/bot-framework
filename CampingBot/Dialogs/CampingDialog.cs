@@ -1,4 +1,5 @@
 ﻿using CampingBot.Model;
+using CampingBot.Services;
 using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Builder.Luis.Models;
 using Microsoft.Bot.Connector;
@@ -12,33 +13,29 @@ namespace CampingBot.Dialogs
     public class CampingDialog : BaseLuisDialog<object>
     {
         [NonSerialized]
-        private CampingInfo campingInfo = new CampingInfo()
+        private static CampingInfo _campingInfo = null;
+        private CampingInfo GetCampingInfo()
         {
-            Address = "Rua do Camping Bonitão, 25 - CEP 02157-335 - São Paulo, SP, Brasil",
-            ImagesUrl = new List<string>()
+            if (_campingInfo == null)
             {
-                "https://gurudacidade.com.br/wp-content/uploads/2018/02/camping_tents-0.jpg",
-                "https://s3.amazonaws.com/imagescloud/images/medias/camping/camping-tente.jpg",
-                "http://res.muenchen-p.de/.imaging/stk/responsive/image980/dms/lhm/tourismus/camping-l/document/camping-l.jpg",
-                "https://greatist.com/sites/default/files/styles/article_main/public/Campsite_featured.jpg?itok=ZZQ8wJwJ"
-            },
-            Name = "Terramar",
-            InfrastructureItems = new List<string>() { "Fogão", "Chuveiro quente", "Banheiro", "Geladeira compartilhada", "WIFI" },
-            SinglePersonTentPrice = 40,
-            TwoPeopleTentPrice = 65,
-            CampingAreaPrice = 30
-        };
+                var campingTask = Task.Run(() => CampingService.GetCampingInfo());
+                campingTask.Wait();
+                _campingInfo = campingTask.Result;
+            }
+
+            return _campingInfo;
+        }
 
         [LuisIntent("Cumprimento")]
         public async Task Greeting(IDialogContext context, LuisResult result)
         {
-            await context.PostAsync($"Olá, tudo bem?\n Se precisar de informações sobre o camping {campingInfo.Name}, tais como fotos, endereço, preços ou realizar uma reserva, eu posso te ajudar");
+            await context.PostAsync($"Olá, tudo bem?\n Se precisar de informações sobre o camping {GetCampingInfo().Name}, tais como fotos, endereço, preços ou realizar uma reserva, eu posso te ajudar");
         }
 
         [LuisIntent("Infra")]
         public async Task Infrastructure(IDialogContext context, LuisResult result)
         {
-            await context.PostAsync("Nosso camping é equipado com:\n - " + String.Join("\n - ", campingInfo.InfrastructureItems));
+            await context.PostAsync("Nosso camping é equipado com:\n - " + String.Join("\n - ", GetCampingInfo().InfrastructureItems));
         }
 
         [LuisIntent("Reserva")]
@@ -53,7 +50,7 @@ namespace CampingBot.Dialogs
             var message = context.MakeMessage();
             message.AttachmentLayout = AttachmentLayoutTypes.Carousel;
 
-            foreach (var imageUrl in campingInfo.ImagesUrl)
+            foreach (var imageUrl in GetCampingInfo().ImagesUrl)
             {
                 var heroCard = new HeroCard(images: new List<CardImage>() { new CardImage(imageUrl) });
                 message.Attachments.Add(heroCard.ToAttachment());
@@ -65,13 +62,13 @@ namespace CampingBot.Dialogs
         [LuisIntent("Localização")]
         public async Task Localization(IDialogContext context, LuisResult result)
         {
-            await context.PostAsync($"Nosso camping fica localizado em: {campingInfo.Address}");
+            await context.PostAsync($"Nosso camping fica localizado em: {GetCampingInfo().Address}");
         }
 
         [LuisIntent("Tarifas")]
         public async Task Rates(IDialogContext context, LuisResult result)
         {
-            await context.PostAsync($"Nossas tarifas são: \n - Área de camping: R$ {campingInfo.CampingAreaPrice.ToString("N2")} \n - Barraca para uma pessoa: R$ {campingInfo.SinglePersonTentPrice.ToString("N2")} \n - Barraca para duas pessoa: R$ {campingInfo.TwoPeopleTentPrice.ToString("N2")}");
+            await context.PostAsync($"Nossas tarifas são: \n - Área de camping: R$ {GetCampingInfo().CampingAreaPrice.ToString("N2")} \n - Barraca para uma pessoa: R$ {GetCampingInfo().SinglePersonTentPrice.ToString("N2")} \n - Barraca para duas pessoa: R$ {GetCampingInfo().TwoPeopleTentPrice.ToString("N2")}");
         }
 
         [LuisIntent("None")]

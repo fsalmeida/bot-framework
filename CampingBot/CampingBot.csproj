@@ -135,6 +135,7 @@
     </Compile>
     <Compile Include="Model\CampingInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\CampingService.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="packages.config">
