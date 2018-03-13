@@ -16,6 +16,7 @@ namespace CampingBot
         /// </summary>
         public async Task<HttpResponseMessage> Post([FromBody]Activity activity)
         {
+            activity.Locale = "pt-BR";
             if (activity.Type == ActivityTypes.Message)
             {
                 await Conversation.SendAsync(activity, () => new Dialogs.CampingDialog());

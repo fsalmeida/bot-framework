@@ -1,10 +1,13 @@
-﻿using CampingBot.Model;
+﻿using CampingBot.Forms;
+using CampingBot.Model;
 using CampingBot.Services;
 using Microsoft.Bot.Builder.Dialogs;
+using Microsoft.Bot.Builder.FormFlow;
 using Microsoft.Bot.Builder.Luis.Models;
 using Microsoft.Bot.Connector;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading.Tasks;
 
 namespace CampingBot.Dialogs
@@ -41,7 +44,14 @@ namespace CampingBot.Dialogs
         [LuisIntent("Reserva")]
         public async Task Booking(IDialogContext context, LuisResult result)
         {
-            await context.PostAsync("Ainda to aprendendo a realizar reservas XD");
+            FormDialog<ReservationForm> form = new FormDialog<ReservationForm>(new ReservationForm(), ReservationForm.BuildForm, FormOptions.PromptInStart, cultureInfo: new CultureInfo("pt-BR"));
+            context.Call(form, ReservationFormCompletedAsync);
+        }
+
+        private async Task ReservationFormCompletedAsync(IDialogContext context, IAwaitable<ReservationForm> result)
+        {
+            var reservationForm = await result;
+            context.Wait(MessageReceived);
         }
 
         [LuisIntent("Visualizar fotos")]
