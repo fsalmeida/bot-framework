@@ -1,6 +1,7 @@
 ﻿using CampingAPI.Model;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace CampingAPI.Repositories
 {
@@ -16,6 +17,16 @@ namespace CampingAPI.Repositories
             GenerateId(bookingData);
             List<BookingData> userReservations = bookings[userId];
             userReservations.Add(bookingData);
+        }
+
+        public static BookingData GetBooking(string userId, string bookingId)
+        {
+            BookingData bookingData = null;
+
+            if (bookings.ContainsKey(userId))
+                bookingData = bookings[userId].FirstOrDefault(booking => booking.Id == bookingId);
+
+            return bookingData;
         }
 
         private static void GenerateId(BookingData bookingData)

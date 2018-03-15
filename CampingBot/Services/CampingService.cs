@@ -55,13 +55,21 @@ namespace CampingBot.Services
             }
         }
 
-        public class BookingData
+        public static async Task<BookingData> GetBookingData(string userId, string bookingId)
         {
-            public string MainPaxName { get; set; }
-            public int NumberOfGuests { get; set; }
-            public DateTime ArrivalDate { get; set; }
-            public DateTime DepartureDate { get; set; }
-            public bool IncludeTent { get; set; }
+            HttpClient httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Add("UserID", userId);
+
+            try
+            {
+                var resultString = await httpClient.GetStringAsync($"{GetCampingAPIUrl()}/camping/booking/{bookingId}");
+                var bookingData = JsonConvert.DeserializeObject<BookingData>(resultString);
+                return bookingData;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
         }
     }
 }

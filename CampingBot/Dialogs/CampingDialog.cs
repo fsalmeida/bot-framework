@@ -8,7 +8,7 @@ using Microsoft.Bot.Connector;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Text.RegularExpressions;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace CampingBot.Dialogs
@@ -47,6 +47,24 @@ namespace CampingBot.Dialogs
         {
             FormDialog<ReservationForm> form = new FormDialog<ReservationForm>(new ReservationForm(), ReservationForm.BuildForm, FormOptions.PromptInStart, cultureInfo: new CultureInfo("pt-BR"));
             context.Call(form, ReservationFormCompletedAsync);
+        }
+
+        [LuisIntent("InformacoesReserva")]
+        public async Task BookingInfo(IDialogContext context, LuisResult result)
+        {
+            var entity = result.Entities.FirstOrDefault();
+            if (entity != null)
+            {
+                var bookingId = entity.Entity;
+                var bookingData = await CampingService.GetBookingData(context.Activity.From.Id, bookingId);
+                if (bookingData != null)
+                    await context.PostAsync($"\n\nID: {bookingData.Id}\n\nPassageiro principal: {bookingData.MainPaxName}\n\nNúmero total de hóspedes: {bookingData.NumberOfGuests}" +
+                        $"\n\nData da chegada: {bookingData.ArrivalDate.ToString("dd/MM/yyyy")}\n\nData da volta: {bookingData.DepartureDate.ToString("dd/MM/yyyy")}\n\nIncluir barraca: {(bookingData.IncludeTent ? "Sim" : "Não")}");
+                else
+                    await context.PostAsync("Não consegui identificar o número da sua reserva.");
+            }
+            else
+                await context.PostAsync("Não consegui identificar o número da sua reserva.");
         }
 
         private async Task ReservationFormCompletedAsync(IDialogContext context, IAwaitable<ReservationForm> result)

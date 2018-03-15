@@ -50,5 +50,19 @@ namespace CampingAPI.Controllers
             else
                 return new BookingResult() { Errors = new List<string>() { "Usuário ñão identificado" } };
         }
+
+        [HttpGet]
+        [Route("booking/{bookingId}")]
+        public BookingData BookingData([FromRoute] string bookingId)
+        {
+            StringValues values;
+            if (Request.Headers.TryGetValue("UserID", out values))
+            {
+                var userId = values[0];
+                return BookingRepository.GetBooking(userId, bookingId);
+            }
+            else
+                return null;
+        }
     }
 }
