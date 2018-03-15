@@ -133,6 +133,7 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Model\BookingResult.cs" />
     <Compile Include="Model\CampingInfo.cs" />
     <Compile Include="Forms\ReservationForm.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

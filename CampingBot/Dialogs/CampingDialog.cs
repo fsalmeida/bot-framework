@@ -8,6 +8,7 @@ using Microsoft.Bot.Connector;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace CampingBot.Dialogs
@@ -51,6 +52,34 @@ namespace CampingBot.Dialogs
         private async Task ReservationFormCompletedAsync(IDialogContext context, IAwaitable<ReservationForm> result)
         {
             var reservationForm = await result;
+            context.UserData.SetValue("reservationForm", reservationForm);
+            PromptDialog.Confirm(context, AfterReservationConfirmationAsync, $"Sua reserva totalizou R$ {0.ToString("N2")}. Posso confirmar?", "Não entendi, por favor, responda 'Sim' ou 'Não'", promptStyle: PromptStyle.Keyboard);
+        }
+
+        private async Task AfterReservationConfirmationAsync(IDialogContext context, IAwaitable<bool> result)
+        {
+            try
+            {
+                var confirm = await result;
+                if (confirm)
+                {
+                    ReservationForm reservationForm = context.UserData.GetValue<ReservationForm>("reservationForm");
+
+                    var bookingResult = await CampingService.Book(context.Activity.From.Id, reservationForm);
+
+                    if (bookingResult.Errors != null && bookingResult.Errors.Count > 0)
+                        await context.PostAsync("Houve um erro ao emitir sua reserva. Por favor, tente novamente.");
+                    else
+                        await context.PostAsync($"Sua reserva foi confirmada com o ID {bookingResult.Id}.");
+                }
+                else
+                    await context.PostAsync("Ok, posso te ajudar em mais alguma coisa?");
+            }
+            finally
+            {
+                context.UserData.RemoveValue("reservationForm");
+            }
+
             context.Wait(MessageReceived);
         }
 

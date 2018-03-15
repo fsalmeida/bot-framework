@@ -1,8 +1,5 @@
 ﻿using Microsoft.Bot.Builder.FormFlow;
 using System;
-using System.Globalization;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CampingBot.Forms
 {
