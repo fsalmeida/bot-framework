@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using CampingAPI.Model;
 using CampingAPI.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -11,34 +10,50 @@ namespace CampingAPI.Controllers
     public class CampingController : Controller
     {
         [HttpGet]
-        public CampingInfo Get()
+        public CampingInfo CampingInfo()
         {
             CampingInfo campingInfo = new CampingInfo()
             {
                 Address = "Rua do Camping Bonitão, 25 - CEP 02157-335 - São Paulo, SP, Brasil",
                 ImagesUrl = new List<string>()
                 {
-                    "https://gurudacidade.com.br/wp-content/uploads/2018/02/camping_tents-0.jpg",
-                    "https://s3.amazonaws.com/imagescloud/images/medias/camping/camping-tente.jpg",
-                    "http://res.muenchen-p.de/.imaging/stk/responsive/image980/dms/lhm/tourismus/camping-l/document/camping-l.jpg",
-                    "https://greatist.com/sites/default/files/styles/article_main/public/Campsite_featured.jpg?itok=ZZQ8wJwJ"
+                    "https://upload.wikimedia.org/wikipedia/commons/0/01/CampingNearTheBeach.jpeg",
+                    "https://macamp.com.br/guia/wp-content/uploads//arquivos/guia/arquivos/88/imagens/17a6d085b71.jpg",
+                    "https://i3.wp.com/trekkingbrasil.com/wp-content/uploads/lona-sobre-barraca.jpg",
+                    "http://www.webcamping.com.br/campings/pedaserra07.jpg",
+                    "http://www.portalcanoaquebrada.com.br/camping_canoa_quebrada/camping_canoa_quebrada_03.jpg"
                 },
                 Name = "Terramar",
                 InfrastructureItems = new List<string>() { "Fogão", "Chuveiro quente", "Banheiro", "Geladeira compartilhada", "WIFI" },
-                SinglePersonTentPrice = 40,
-                TwoPeopleTentPrice = 65,
-                CampingAreaPrice = 30
+                SinglePersonTentPrice = Model.BookingData.SinglePersonTentPrice,
+                TwoPeopleTentPrice = Model.BookingData.TwoPeopleTentPrice,
+                CampingAreaPrice = Model.BookingData.CampingAreaPrice
             };
             return campingInfo;
+        }
+
+        [HttpPost]
+        [Route("pricing")]
+        public decimal? Pricing([FromBody]BookingData bookingData)
+        {
+            if (!bookingData.IsValid())
+                return null;
+
+            bookingData.SetPrice();
+            return bookingData.Price;
         }
 
         [HttpPost]
         [Route("book")]
         public BookingResult Book([FromBody]BookingData bookingData)
         {
+            if (!bookingData.IsValid())
+                return new BookingResult() { Errors = new List<string>() { "Informações inválidas para a reserva" } };
+
             StringValues values;
             if (Request.Headers.TryGetValue("UserID", out values))
             {
+                bookingData.SetPrice();
                 var userId = values[0];
                 BookingRepository.AddBooking(userId, bookingData);
 
@@ -48,7 +63,7 @@ namespace CampingAPI.Controllers
                 };
             }
             else
-                return new BookingResult() { Errors = new List<string>() { "Usuário ñão identificado" } };
+                return new BookingResult() { Errors = new List<string>() { "Usuário não identificado" } };
         }
 
         [HttpGet]

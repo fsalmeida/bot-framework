@@ -59,7 +59,8 @@ namespace CampingBot.Dialogs
                 var bookingData = await CampingService.GetBookingData(context.Activity.From.Id, bookingId);
                 if (bookingData != null)
                     await context.PostAsync($"\n\nID: {bookingData.Id}\n\nPassageiro principal: {bookingData.MainPaxName}\n\nNúmero total de hóspedes: {bookingData.NumberOfGuests}" +
-                        $"\n\nData da chegada: {bookingData.ArrivalDate.ToString("dd/MM/yyyy")}\n\nData da volta: {bookingData.DepartureDate.ToString("dd/MM/yyyy")}\n\nIncluir barraca: {(bookingData.IncludeTent ? "Sim" : "Não")}");
+                        $"\n\nData da chegada: {bookingData.ArrivalDate.ToString("dd/MM/yyyy")}\n\nData da volta: {bookingData.DepartureDate.ToString("dd/MM/yyyy")}" +
+                        $"\n\nIncluir barraca: {(bookingData.IncludeTent ? "Sim" : "Não")}\n\nValor da reserva: R$ {bookingData.Price.ToString("N2")}");
                 else
                     await context.PostAsync("Não consegui identificar o número da sua reserva.");
             }
@@ -71,7 +72,15 @@ namespace CampingBot.Dialogs
         {
             var reservationForm = await result;
             context.UserData.SetValue("reservationForm", reservationForm);
-            PromptDialog.Confirm(context, AfterReservationConfirmationAsync, $"Sua reserva totalizou R$ {0.ToString("N2")}. Posso confirmar?", "Não entendi, por favor, responda 'Sim' ou 'Não'", promptStyle: PromptStyle.Keyboard);
+            decimal? price = await CampingService.GetPrice(reservationForm);
+
+            if (price == null)
+            {
+                await context.PostAsync("Existem dados inválidos na sua reserva, por favor tente novamente.");
+                context.Wait(MessageReceived);
+            }
+            else
+                PromptDialog.Confirm(context, AfterReservationConfirmationAsync, $"Sua reserva totalizou R$ {price.Value.ToString("N2")}. Posso confirmar?", "Não entendi, por favor, responda 'Sim' ou 'Não'", promptStyle: PromptStyle.Keyboard);
         }
 
         private async Task AfterReservationConfirmationAsync(IDialogContext context, IAwaitable<bool> result)

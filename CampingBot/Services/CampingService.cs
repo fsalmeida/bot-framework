@@ -30,6 +30,14 @@ namespace CampingBot.Services
             return JsonConvert.DeserializeObject<CampingInfo>(jsonResult);
         }
 
+        public static async Task<decimal?> GetPrice(ReservationForm reservationForm)
+        {
+            HttpClient httpClient = new HttpClient();
+            var result = await httpClient.PostAsJsonAsync($"{GetCampingAPIUrl()}/camping/pricing", GetReservationObj(reservationForm));
+            var jsonResult = await result.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<decimal?>(jsonResult);
+        }
+
         public static async Task<BookingResult> Book(string userId, ReservationForm reservationForm)
         {
             HttpClient httpClient = new HttpClient();
@@ -37,14 +45,7 @@ namespace CampingBot.Services
 
             try
             {
-                var response = await httpClient.PostAsJsonAsync($"{GetCampingAPIUrl()}/camping/book", new
-                {
-                    reservationForm.MainPaxName,
-                    reservationForm.NumberOfGuests,
-                    reservationForm.ArrivalDate,
-                    reservationForm.DepartureDate,
-                    reservationForm.IncludeTent
-                });
+                var response = await httpClient.PostAsJsonAsync($"{GetCampingAPIUrl()}/camping/book", GetReservationObj(reservationForm));
                 var resultString = await response.Content.ReadAsStringAsync();
                 var bookingResult = JsonConvert.DeserializeObject<BookingResult>(resultString);
                 return bookingResult;
@@ -70,6 +71,18 @@ namespace CampingBot.Services
             {
                 return null;
             }
+        }
+
+        private static object GetReservationObj(ReservationForm reservationForm)
+        {
+            return new
+            {
+                reservationForm.MainPaxName,
+                reservationForm.NumberOfGuests,
+                reservationForm.ArrivalDate,
+                reservationForm.DepartureDate,
+                reservationForm.IncludeTent
+            };
         }
     }
 }

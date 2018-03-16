@@ -10,5 +10,6 @@ namespace CampingBot.Model
         public DateTime ArrivalDate { get; set; }
         public DateTime DepartureDate { get; set; }
         public bool IncludeTent { get; set; }
+        public decimal Price { get; set; }
     }
 }
